@@ -53,7 +53,6 @@ public class NetworkDiscovery : MonoBehaviour{
 	bool m_IsClient = false;
 
 	byte[] msgOutBuffer = null;
-	byte[] msgInBuffer = null;
 	HostTopology defaultTopology;
 
 	public bool isServer { get { return m_IsServer; } set { m_IsServer = value; } }
@@ -94,7 +93,6 @@ public class NetworkDiscovery : MonoBehaviour{
 		RoomName = GetRoomData ();
 		msgOutBuffer = StringToBytes(RoomName);
 
-		msgInBuffer = new byte[kMaxBroadcastMsgSize];
 
 		ConnectionConfig cc = new ConnectionConfig();
 
@@ -147,6 +145,7 @@ public class NetworkDiscovery : MonoBehaviour{
 		}
 
 		byte err;
+
 		if (!NetworkTransport.StartBroadcastDiscovery(hostId, m_BroadcastPort, m_BroadcastKey, m_BroadcastVersion, m_BroadcastSubVersion, msgOutBuffer, msgOutBuffer.Length, 1000, out err))
 		{
 			Debug.LogError("NetworkDiscovery StartBroadcast failed err: " + err);
@@ -181,7 +180,6 @@ public class NetworkDiscovery : MonoBehaviour{
 		running = false;
 		m_IsServer = false;
 		m_IsClient = false;
-		msgInBuffer = null;
 		Debug.Log("Stopped Discovery broadcasting");
 	}
 
@@ -201,6 +199,9 @@ public class NetworkDiscovery : MonoBehaviour{
 
 		do
 		{
+
+			byte[] msgInBuffer = new byte[kMaxBroadcastMsgSize];
+
 			networkEvent = NetworkTransport.ReceiveFromHost(hostId, out connectionId, out channelId, msgInBuffer, kMaxBroadcastMsgSize, out receivedSize, out error);
 
 			if (networkEvent == NetworkEventType.BroadcastEvent)
@@ -224,6 +225,7 @@ public class NetworkDiscovery : MonoBehaviour{
 		string HostIp;
 		var address = fromAddress.Split (':');
 		HostIp = address [3];
+		Debug.LogError (HostIp);
 
 		//if game is disconnected and is in our available list of games, remove it from that list
 		if (data == "disconnected" && LoginManager.instance.AvailableGames.ContainsKey (HostIp)) {

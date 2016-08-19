@@ -8,8 +8,8 @@ public class LoginManager : MonoBehaviour {
 	public enum Seats{red=0,blue,green,yellow,orange,black,white,teal};
 	public static LoginManager instance;
 	public Dictionary<string, GameToJoin> AvailableGames = new Dictionary<string, GameToJoin>();
-	public AudioSource s;
 
+	public bool Hosting = true;
 	void Awake(){
 		if (instance == null) {
 			instance = this;
@@ -18,20 +18,34 @@ public class LoginManager : MonoBehaviour {
 	}
 
 	void Start(){
-		NetworkDiscovery.instance.StopBroadcast ();
-		CreateHostGameButton ();
-		CreateJoinGameButton ();
+		if (Hosting) {
+			CreateMainMenuButton ("Start", "HostGame");
+			CreateMainMenuButton ("Load", "LoadGame");
+			CreateMainMenuButton ("Tutorial", "TutorialMode");
+		} else
+			JoinGame ();
+
+		gameObject.BroadcastMessage ("functionName");
 	}
 
 	public void HostGame(){
 		NetworkDiscovery.instance.Initialize ();
 		NetworkDiscovery.instance.StartAsServer ();
+		Transform PanelConnection = transform.FindChild ("Pnl_Connection");
+		PanelConnection.gameObject.SetActive(false);
+		SetGameName();
+		WebSocketManager.instance.StartAsServer ();
 	}
 
 	public void JoinGame(){
 		NetworkDiscovery.instance.Initialize ();
 		NetworkDiscovery.instance.StartAsClient ();
 		DisplayGames ();
+		Transform PanelNetworkGames = transform.FindChild ("Pnl_NetworkGames");
+		Transform PanelConnection = transform.FindChild ("Pnl_Connection");
+		PanelConnection.gameObject.SetActive(false);
+		PanelNetworkGames.gameObject.SetActive(true);
+		CreateRefreshButton();
 	}
 
 	public void RemoveGame(string ip){
@@ -48,7 +62,6 @@ public class LoginManager : MonoBehaviour {
 		Transform PanelListGames = transform.FindChild ("Pnl_NetworkGames/Pnl_ListGames");		
 
 		foreach (Transform child in PanelListGames) {
-			Debug.LogError (child.name);
 			Destroy (child.gameObject);
 		}
 		foreach(GameToJoin game in AvailableGames.Values){
@@ -67,7 +80,8 @@ public class LoginManager : MonoBehaviour {
 		GameObject btn = Instantiate (Resources.Load ("RoomButton/Btn_Room")) as GameObject;
 		btn.transform.SetParent (PanelButton);
 		btn.transform.FindChild ("Text").GetComponent<Text> ().text = game.roomName + "\n" + game.LocalIp;
-		btn.GetComponent<Button> ().onClick.AddListener (() => HostGame ());
+		btn.GetComponent<Button> ().onClick.AddListener (() => Debug.LogError(game.LocalIp));
+		btn.GetComponent<Button> ().onClick.AddListener (() => WebSocketManager.instance.StartAsClient (game.LocalIp, game.roomName));
 
 		/*
 		GameObject gamebtn = Instantiate (buttonPrefab) as GameObject;
@@ -108,13 +122,13 @@ public void DisplayGames(){
 		Debug.LogError (gameAvailable.LocalIp);
 	}
 
-	public void CreateHostGameButton(){
+	public void CreateMainMenuButton(string buttonName, string msg){
 		Transform PanelConnection = transform.FindChild ("Pnl_Connection");
-		GameObject btn = Instantiate (Resources.Load ("HostButton/Btn_Host")) as GameObject;
+		GameObject btn = Instantiate (Resources.Load ("MainMenuButton/Btn_MainMenu")) as GameObject;
 		btn.transform.SetParent (PanelConnection);
-		btn.GetComponent<Button> ().onClick.AddListener (() => HostGame ());
-		btn.GetComponent<Button> ().onClick.AddListener (() => PanelConnection.gameObject.SetActive(false));
-		btn.GetComponent<Button> ().onClick.AddListener (() => SetGameName());
+
+		btn.transform.FindChild ("Text").GetComponent<Text> ().text = buttonName;
+		btn.GetComponent<Button> ().onClick.AddListener (() => gameObject.BroadcastMessage(msg));
 	}
 
 	public void SetGameName(){
@@ -129,20 +143,6 @@ public void DisplayGames(){
 		btn.transform.SetParent (PanelNetworkGames);
 		btn.GetComponent<Button> ().onClick.AddListener (() => RefreshGames ());
 	}
-
-	public void CreateJoinGameButton(){
-		Transform PanelNetworkGames = transform.FindChild ("Pnl_NetworkGames");
-		Transform PanelConnection = transform.FindChild ("Pnl_Connection");
-		Debug.LogError (PanelConnection.name);
-		GameObject btn = Instantiate (Resources.Load ("JoinButton/Btn_Join")) as GameObject;
-		btn.transform.SetParent (PanelConnection);
-		btn.GetComponent<Button> ().onClick.AddListener (() => JoinGame ());
-		btn.GetComponent<Button> ().onClick.AddListener (() => PanelConnection.gameObject.SetActive(false));
-		btn.GetComponent<Button> ().onClick.AddListener (() => PanelNetworkGames.gameObject.SetActive(true));
-		btn.GetComponent<Button> ().onClick.AddListener (() => DisplayGames());
-		btn.GetComponent<Button> ().onClick.AddListener (() => CreateRefreshButton());
-	}
-
 
 
 }
