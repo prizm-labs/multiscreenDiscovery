@@ -27,6 +27,7 @@ public class WebsocketServer : MonoBehaviour {
 	void Start () {
 		String PlayerServicePath = "players";
 		wssv.AddWebSocketService<PlayerService>("/"+ PlayerServicePath);
+
 		wssv.Start();
 		playerSessions = wssv.WebSocketServices["/" + PlayerServicePath].Sessions;
     }
