@@ -1,5 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
+using TouchScript;
+using TouchScript.Gestures;
+
 
 public class PlayTableManager : MonoBehaviour {
 	public bool hosting = true;
@@ -10,9 +13,12 @@ public class PlayTableManager : MonoBehaviour {
 
 	void PlayTableBootStrap(){
 		GameObject mainMenu = Instantiate (Resources.Load ("PlayTablePrefabs/MainMenu"))as GameObject;
+		mainMenu.AddComponent<LoginManager> ();
 		mainMenu.GetComponent<LoginManager> ().Hosting = hosting;
-		Instantiate (Resources.Load ("PlayTablePrefabs/NetworkDiscoveryManager"));
-		Instantiate (Resources.Load ("PlayTablePrefabs/TouchScript"));
-		Instantiate (Resources.Load ("PlayTablePrefabs/WebSocketManager"));
+		gameObject.AddComponent<NetworkDiscovery> ();
+		Lexic.NameGenerator reference = gameObject.AddComponent<Lexic.NameGenerator> ();
+		gameObject.AddComponent<TouchScript.InputSources.StandardInput> ();
+		gameObject.AddComponent<TouchScript.Behaviors.TouchScriptInputModule> ();
+		gameObject.AddComponent<WebSocketManager> ();
 	}
 }

@@ -9,7 +9,7 @@ namespace Lexic
     public class NameGenerator : MonoBehaviour
     {
 
-        public string namesSourceClass;
+		public string namesSourceClass = "Lexic.TownNames";
         public System.Random rng;
 
         private List<string> rules;

@@ -25,7 +25,6 @@ public class LoginManager : MonoBehaviour {
 		} else
 			JoinGame ();
 
-		gameObject.BroadcastMessage ("functionName");
 	}
 
 	public void HostGame(){
