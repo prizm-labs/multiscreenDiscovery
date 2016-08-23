@@ -38,16 +38,15 @@ public class TTManager : MonoBehaviour {
 	}
 
 	void PlayerDescriptorFunction(object data){
-		
+		Debug.LogError ("Changing player seat");
 	}
+
 	void ZoneDescriptorFunction(object data){
 		
 	}
+
 	void PieceDescriptorFunction(object data){
 		
 	}
-
-
-	
 
 }

@@ -13,9 +13,12 @@ public class WebsocketServer : MonoBehaviour {
 	public DataReceiveDelegate PieceDescriptorData;
 	public DataReceiveDelegate PlayerDescriptorData;
 	public DataReceiveDelegate ZoneDescriptorData;
+
 	public delegate void PlayerSeatDelegate();
 
 	public PlayerSeatDelegate updatePlayerSeatOnConnect;
+
+
 
 	public string playermsg = "";
 	public static int port = 4649;
@@ -44,6 +47,15 @@ public class WebsocketServer : MonoBehaviour {
     void Update () {		
 		if (playermsg != "") {
 			Debug.LogError (playermsg);
+			JSONObject jo = new JSONObject (playermsg);
+			switch (jo ["DataType"].str) {
+
+			case("PlayerDescriptor"):
+				PlayerDescriptorData (jo.ToString ());
+				break;
+			default:
+				break;
+			}
 			//var obj = new JSONObject(playermsg);
 			/*
 			for (int i = 0; i < obj.Count; i++)
@@ -89,10 +101,6 @@ public class WebsocketServer : MonoBehaviour {
 		playerSessions.Broadcast(data.ToString());
 	}
 
-	//send commands via messaging
-	public void sendPlayerUpdate(string msg){
-		playerSessions.Broadcast(msg);     
-	}
 
 }
 
@@ -103,7 +111,6 @@ public class PlayerService : WebSocketService{
 	//when player login, send them update of gamestate
 	protected override void OnOpen()
 	{
-		Debug.LogError ("Sending to Player, data");
 		WebsocketServer.instance.updatePlayerSeatOnConnect();
 	}
 

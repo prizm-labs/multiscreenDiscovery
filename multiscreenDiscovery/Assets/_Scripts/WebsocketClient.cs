@@ -11,7 +11,6 @@ public class WebsocketClient : MonoBehaviour {
 	public DataReceiveDelegate PlayerDescriptorData;
 	public DataReceiveDelegate ZoneDescriptorData;
 
-
 	public string ip;
 	public string sessionName;
 	public string websocketService = "players";
@@ -56,8 +55,6 @@ public class WebsocketClient : MonoBehaviour {
 		var ver = Application.unityVersion;
 		ws.OnOpen += (sender, e) =>
 		{
-			Debug.LogError("OnOpen");
-			ws.Send(String.Format("Hello, Unity {0}!", ver));
 		};
 
 		ws.OnMessage += (sender, e) =>

@@ -20,7 +20,6 @@ public class HHManager : MonoBehaviour {
 		WebsocketClient.instance.PlayerDescriptorData -= PlayerDescriptorFunction;
 		WebsocketClient.instance.ZoneDescriptorData -= ZoneDescriptorFunction;
 		WebsocketClient.instance.PieceDescriptorData -= PieceDescriptorFunction;
-
 	}
 
 	public void PlayerDescriptorFunction(object data){	

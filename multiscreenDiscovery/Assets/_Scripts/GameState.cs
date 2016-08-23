@@ -3,7 +3,7 @@ using System.Collections;
 
 [System.Serializable]
 public class GameStates  {
-	
+
 	public class PlayerDescriptor
 	{	
 		
