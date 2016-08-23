@@ -9,6 +9,14 @@ public class WebsocketServer : MonoBehaviour {
     public static WebsocketServer instance;
 	public WebSocketSessionManager playerSessions;
 
+	public delegate void DataReceiveDelegate(object data);
+	public DataReceiveDelegate PieceDescriptorData;
+	public DataReceiveDelegate PlayerDescriptorData;
+	public DataReceiveDelegate ZoneDescriptorData;
+	public delegate void PlayerSeatDelegate();
+
+	public PlayerSeatDelegate updatePlayerSeatOnConnect;
+
 	public string playermsg = "";
 	public static int port = 4649;
 
@@ -73,43 +81,52 @@ public class WebsocketServer : MonoBehaviour {
 */
 			playermsg = "";
 		}
-
 	}
 
-
 	//send game state via JSONObject
-	public void sendPlayerUpdate()
+	public void sendPlayerUpdate(object data)
 	{  
-		//sample JSONObject
-		var update = new JSONObject(delegate (JSONObject request){
-				request.AddField("topic", "gamestate");
-				request.AddField("winningBid", "wow");
-				request.AddField("startingBid", "whatthe");
-				request.AddField("winningPlayer", "me");
-			}).ToString();
-
-		playerSessions.Broadcast(update);        
-
+		playerSessions.Broadcast(data.ToString());
 	}
 
 	//send commands via messaging
 	public void sendPlayerUpdate(string msg){
 		playerSessions.Broadcast(msg);     
 	}
+
 }
 
 
 
 public class PlayerService : WebSocketService{
+	
 	//when player login, send them update of gamestate
 	protected override void OnOpen()
 	{
-		WebsocketServer.instance.sendPlayerUpdate();
+		Debug.LogError ("Sending to Player, data");
+		WebsocketServer.instance.updatePlayerSeatOnConnect();
 	}
 
 	//data we receive from players
 	protected override void OnMessage(MessageEventArgs e)
 	{
+
+		Debug.LogError("Received Message from server " + e.Data);
+
+		switch(e.Data[0].ToString()){
+		case("PlayerDescriptor"):
+			WebsocketServer.instance.PlayerDescriptorData(e.Data);
+			break;
+		case("ZoneDescriptor"):
+			WebsocketServer.instance.ZoneDescriptorData(e.Data);
+			break;
+		case("PieceDescriptor"):
+			WebsocketServer.instance.PieceDescriptorData(e.Data);
+			break;
+		default:
+			break;
+
+		}
 		WebsocketServer.instance.playermsg = e.Data;
 
 	}

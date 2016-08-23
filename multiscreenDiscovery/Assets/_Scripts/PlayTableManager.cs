@@ -7,7 +7,7 @@ using TouchScript.Gestures;
 public class PlayTableManager : MonoBehaviour {
 	public bool hosting = true;
 	// Use this for initialization
-	void Start () {
+	void Awake () {
 		PlayTableBootStrap ();
 	}
 
@@ -16,7 +16,7 @@ public class PlayTableManager : MonoBehaviour {
 		mainMenu.AddComponent<LoginManager> ();
 		mainMenu.GetComponent<LoginManager> ().Hosting = hosting;
 		gameObject.AddComponent<NetworkDiscovery> ();
-		Lexic.NameGenerator reference = gameObject.AddComponent<Lexic.NameGenerator> ();
+		gameObject.AddComponent<Lexic.NameGenerator> ();
 		gameObject.AddComponent<TouchScript.InputSources.StandardInput> ();
 		gameObject.AddComponent<TouchScript.Behaviors.TouchScriptInputModule> ();
 		gameObject.AddComponent<WebSocketManager> ();

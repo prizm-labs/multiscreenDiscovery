@@ -9,10 +9,13 @@ public class LoginManager : MonoBehaviour {
 	public static LoginManager instance;
 	public Dictionary<string, GameToJoin> AvailableGames = new Dictionary<string, GameToJoin>();
 
+	public string gameName;
 	public bool Hosting = true;
+
 	void Awake(){
 		if (instance == null) {
 			instance = this;
+			DontDestroyOnLoad (gameObject);
 		} else
 			Destroy (this);
 	}
@@ -24,8 +27,9 @@ public class LoginManager : MonoBehaviour {
 			CreateMainMenuButton ("Tutorial", "TutorialMode");
 		} else
 			JoinGame ();
-
 	}
+
+	#region Host Stuff
 
 	public void HostGame(){
 		NetworkDiscovery.instance.Initialize ();
@@ -34,27 +38,56 @@ public class LoginManager : MonoBehaviour {
 		PanelConnection.gameObject.SetActive(false);
 		SetGameName();
 		WebSocketManager.instance.StartAsServer ();
+		CreateTTManager ();
 	}
 
-	public void JoinGame(){
+	public void CreateTTManager(){
+		GameObject emptyGameObject = new GameObject ("TTManager");
+		emptyGameObject.AddComponent<TTManager> ();
+	}
+
+	public void CreateMainMenuButton(string buttonName, string msg){
+		Transform PanelConnection = transform.FindChild ("Pnl_Connection");
+		GameObject btn = Instantiate (Resources.Load ("PlayTablePrefabs/MainMenuButton/Btn_MainMenu")) as GameObject;
+		btn.transform.SetParent (PanelConnection);
+
+		btn.transform.FindChild ("Text").GetComponent<Text> ().text = buttonName;
+		btn.GetComponent<Button> ().onClick.AddListener (() => gameObject.BroadcastMessage(msg));
+	}
+
+	public void SetGameName(){
+		gameName = NetworkDiscovery.instance.RoomName;
+	}
+	#endregion 
+
+
+	#region client stuff
+	void JoinGame(){
 		NetworkDiscovery.instance.Initialize ();
 		NetworkDiscovery.instance.StartAsClient ();
-		DisplayGames ();
+		WebSocketManager.instance.StartAsClient ();
+		CreateRefreshButton();
+		ShowAvailableGames ();
+		CreateHHManager ();
+	}
+
+	void ShowAvailableGames(){
 		Transform PanelNetworkGames = transform.FindChild ("Pnl_NetworkGames");
 		Transform PanelConnection = transform.FindChild ("Pnl_Connection");
+		Transform PanelGameInfo = transform.FindChild ("Pnl_GameInfo");
 		PanelConnection.gameObject.SetActive(false);
 		PanelNetworkGames.gameObject.SetActive(true);
-		CreateRefreshButton();
-	}
-
-	public void RemoveGame(string ip){
-		AvailableGames.Remove (ip);
+		PanelGameInfo.gameObject.SetActive (false);	
 		DisplayGames ();
 	}
 
-	public void AddGame(GameToJoin game){
-		AvailableGames.Add (game.LocalIp, game);
-		DisplayGames ();		
+	void CreateGamesButton(GameToJoin game){
+		Transform PanelButton = transform.FindChild ("Pnl_NetworkGames/Pnl_ListGames");
+		GameObject btn = Instantiate (Resources.Load ("PlayTablePrefabs/RoomButton/Btn_Room")) as GameObject;
+		btn.transform.SetParent (PanelButton);
+		btn.transform.FindChild ("Text").GetComponent<Text> ().text = game.roomName + "\n" + game.LocalIp;
+		btn.GetComponent<Button> ().onClick.AddListener (() => WebsocketClient.instance.BeginConnection (game.LocalIp, game.roomName));
+		btn.GetComponent<Button>().onClick.AddListener(()=> ShowRoomInfo());
 	}
 
 	public void DisplayGames(){
@@ -66,82 +99,62 @@ public class LoginManager : MonoBehaviour {
 		foreach(GameToJoin game in AvailableGames.Values){
 			CreateGamesButton (game);
 		}
-
 	}
-
-	public void RefreshGames(){
+	public void RemoveGame(string ip){
+		AvailableGames.Remove (ip);
+		DisplayGames ();
+	}
+	public void AddGame(GameToJoin game){
+		AvailableGames.Add (game.LocalIp, game);
+		DisplayGames ();		
+	}
+	void RefreshGames(){
 		AvailableGames.Clear ();
 		DisplayGames ();
 	}
 
-	void CreateGamesButton(GameToJoin game){
-		Transform PanelButton = transform.FindChild ("Pnl_NetworkGames/Pnl_ListGames");
-		GameObject btn = Instantiate (Resources.Load ("RoomButton/Btn_Room")) as GameObject;
-		btn.transform.SetParent (PanelButton);
-		btn.transform.FindChild ("Text").GetComponent<Text> ().text = game.roomName + "\n" + game.LocalIp;
-		btn.GetComponent<Button> ().onClick.AddListener (() => Debug.LogError(game.LocalIp));
-		btn.GetComponent<Button> ().onClick.AddListener (() => WebSocketManager.instance.StartAsClient (game.LocalIp, game.roomName));
-
-		/*
-		GameObject gamebtn = Instantiate (buttonPrefab) as GameObject;
-		BtnScrpt_JoinGame gamebtnScript = gamebtn.GetComponent<BtnScrpt_JoinGame> ();
-		gamebtn.transform.SetParent(DisplayAvailableGamesPanelSub.transform);
-		gamebtnScript.MyData = game;
-		gamebtnScript.DisplayRoomInfo ();
-
-		gamebtnScript.SetButtonAction ();
-		gamebtnScript.MyButtonScript.onClick.AddListener(() => DisplayAvailableGamesPanel.SetActive (false));
-		gamebtnScript.MyButtonScript.onClick.AddListener (() => DisplayLoginPanel.SetActive (false));
-		Debug.LogError ("Disabling");*/
-	}
-
-	public void DisplaySeats(){/*
-		foreach (Transform child in DisplayAvailableGamesPanel.transform) {
-			Destroy (child.gameObject);
-		}*/
-	}		
-
-	/*
-
-public void DisplayGames(){
-	Debug.LogError ("All available games");
-	GameObject PanelOfGames;
-	foreach (GameToJoin content in AvailableGames.Values) {
-		PanelOfGames = GameObject.Find ("Canvas_Login/Panel/Panel");
-		GameObject newButton = Instantiate (buttonPrefab) as GameObject;
-		newButton.transform.SetParent (PanelOfGames.transform);
-		newButton.GetComponent<Button>().onClick.AddListener(() => AddRoomButton(content));
-		newButton.tag = content.LocalIp;
-		}
-	}
-*/
-
-
-	private void AddRoomButton(GameToJoin gameAvailable){
-		Debug.LogError (gameAvailable.LocalIp);
-	}
-
-	public void CreateMainMenuButton(string buttonName, string msg){
+	void ShowRoomInfo(){
+		Transform PanelNetworkGames = transform.FindChild ("Pnl_NetworkGames");
 		Transform PanelConnection = transform.FindChild ("Pnl_Connection");
-		GameObject btn = Instantiate (Resources.Load ("MainMenuButton/Btn_MainMenu")) as GameObject;
-		btn.transform.SetParent (PanelConnection);
-
-		btn.transform.FindChild ("Text").GetComponent<Text> ().text = buttonName;
-		btn.GetComponent<Button> ().onClick.AddListener (() => gameObject.BroadcastMessage(msg));
+		Transform PanelGameInfo = transform.FindChild ("Pnl_GameInfo");
+		PanelConnection.gameObject.SetActive(false);
+		PanelNetworkGames.gameObject.SetActive(false);
+		PanelGameInfo.gameObject.SetActive (true);	
 	}
 
-	public void SetGameName(){
-		transform.FindChild ("Pnl_GameInfo").gameObject.SetActive (true);
-		Text TextGameInfo = transform.Find ("Pnl_GameInfo/Txt_RoomName").GetComponent<Text>();
-		TextGameInfo.text = NetworkDiscovery.instance.RoomName;
+	void CreateHHManager(){
+		GameObject emptyGameObject = new GameObject ();
+		emptyGameObject.name = "HHManager";
+		emptyGameObject.AddComponent<HHManager> ();
 	}
 
-	public void CreateRefreshButton(){
+	public void DisplaySeats(JSONObject data){
+		Transform PanelButton = transform.FindChild ("Pnl_GameInfo");
+		foreach (Transform child in PanelButton) {
+			Destroy (child.gameObject);
+		}
+		if (data.Count > 1) {
+			for (int i = 1; i < data.Count ; i++) {
+				AddSeat (data [i]);
+			}
+		}
+	}		
+	private void AddSeat(JSONObject d){
+		Transform PanelButton = transform.FindChild ("Pnl_GameInfo");
+		GameObject btn = Instantiate (Resources.Load ("PlayTablePrefabs/SeatButton/Btn_Seat")) as GameObject;
+		btn.transform.SetParent (PanelButton);
+		btn.transform.FindChild ("Text").GetComponent<Text> ().text = d["playerName"].str;
+		Debug.LogError (d ["playerSeated"]);
+		btn.GetComponent<Button> ().interactable = d ["playerSeated"].b;
+	}
+
+	void CreateRefreshButton(){
 		Transform PanelNetworkGames = transform.FindChild ("Pnl_NetworkGames/Pnl_RefreshPanel");
-		GameObject btn = Instantiate (Resources.Load ("RefreshGamesButton/Btn_Refresh")) as GameObject;
+		GameObject btn = Instantiate (Resources.Load ("PlayTablePrefabs/RefreshGamesButton/Btn_Refresh")) as GameObject;
 		btn.transform.SetParent (PanelNetworkGames);
 		btn.GetComponent<Button> ().onClick.AddListener (() => RefreshGames ());
 	}
 
+	#endregion
 
 }
