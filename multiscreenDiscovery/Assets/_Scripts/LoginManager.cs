@@ -145,19 +145,8 @@ public class LoginManager : MonoBehaviour {
 		GameObject btn = Instantiate (Resources.Load ("PlayTablePrefabs/SeatButton/Btn_Seat")) as GameObject;
 		btn.transform.SetParent (PanelButton);
 		btn.transform.FindChild ("Text").GetComponent<Text> ().text = d["playerName"].str;
-		Debug.LogError (d ["playerSeated"]);
-		btn.GetComponent<Button> ().interactable = d ["playerSeated"].b;
-		btn.GetComponent<Button> ().onClick.AddListener (() => WebsocketClient.instance.SendData (seated (d)));
 	}
-	
-	string seated(JSONObject d){
-		GameStates.PlayerDescriptor pd = JsonUtility.FromJson<GameStates.PlayerDescriptor> (d.ToString ());
-		pd.playerSeated = false;
-		JSONObject jo = new JSONObject (JsonUtility.ToJson(pd).ToString());
-		Debug.LogError (jo);
-		jo.AddField ("DataType", "PlayerDescriptor");
-		return jo.ToString ();
-	}
+
 
 	void CreateRefreshButton(){
 		Transform PanelNetworkGames = transform.FindChild ("Pnl_NetworkGames/Pnl_RefreshPanel");
